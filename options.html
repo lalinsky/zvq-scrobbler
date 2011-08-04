@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="md5.js"></script>
+    <script type="text/javascript" src="lastfm.js"></script>
+</head>
+<body>
+
+<span id="lfm-msg"></span>
+<button id="lfm-auth" onclick="authenticate()">Authenticate</button>
+<button id="lfm-session" style="display:none" onclick="getsession()">Finish authorization</button>
+
+<script type="text/javascript">
+var lfm = new LastfmClient();
+
+function authenticate() {
+	lfm.sendRequest({'method':'auth.gettoken'}, function(resp) {
+		lfm.token = resp.token;
+		var url = "http://www.last.fm/api/auth/?api_key=" + lfm.apiKey + "&token=" + resp.token;
+		window.open(url);
+		document.getElementById('lfm-auth').style.display = 'none';
+		document.getElementById('lfm-session').style.display = '';
+	});
+}
+
+function getsession() {
+	lfm.sendRequest({'method':'auth.getsession', 'token': lfm.token}, function(resp) {
+		if (resp.session) {
+			lfm.setSessionKey(resp.session.key);
+			alert('Authenticated!');
+			document.getElementById('lfm-msg').innerHTML = 'Authentified!';
+		}
+		else {
+			alert('Authenticated failed!');
+		}
+		document.getElementById('lfm-auth').style.display = '';
+		document.getElementById('lfm-session').style.display = 'none';
+	});
+}
+
+if (lfm.getSessionKey()) {
+	document.getElementById('lfm-msg').innerHTML = 'Authentified!';
+}
+</script>
+
+</body>
+</html>
+

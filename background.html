@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="md5.js"></script>
+	<script type="text/javascript" src="lastfm.js"></script>
+	<script type="text/javascript">
+function onMessage(message) {
+	console.log('message', message);
+	if (message.action == 'updateNowPlaying') {
+		var lfm = new LastfmClient();
+		if (!lfm.getSessionKey()) {
+			return;
+		}
+		lfm.sendRequest({
+			'method': 'track.updateNowPlaying',
+			'sk': true,
+			'track': message.data.track,
+			'artist': message.data.artist,
+			'album': message.data.album,
+			'albumArtist': message.data.albumArtist,
+			'duration': message.data.duration,
+			'trackNumber': message.data.trackNumber,
+		});
+	}
+	else if (message.action == 'scrobble') {
+		var lfm = new LastfmClient();
+		if (!lfm.getSessionKey()) {
+			return;
+		}
+		lfm.sendRequest({
+			'method': 'track.scrobble',
+			'sk': true,
+			'timestamp': message.data.timestamp,
+			'track': message.data.track,
+			'artist': message.data.artist,
+			'album': message.data.album,
+			'albumArtist': message.data.albumArtist,
+			'duration': message.data.duration,
+			'trackNumber': message.data.trackNumber,
+		});
+	}
+}
+
+function onDisconnect() {
+    console.log('disconnect');
+}
+
+function onConnect(port) {
+    console.log('connect');
+	port.onMessage.addListener(onMessage);
+	port.onDisconnect.addListener(onDisconnect);
+}
+
+chrome.extension.onConnect.addListener(onConnect);
+	</script>
+</head>
+<body></body>
+</html>
+

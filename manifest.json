@@ -1,0 +1,19 @@
+{
+  "name": "Zvooq Scrobbler",
+  "version": "1.0",
+  "description": "Submit your Zvooq listening habits to Last.fm",
+  "permissions": [
+    "http://zvooq.ru/",
+    "http://ws.audioscrobbler.com/"
+  ],
+  "options_page": "options.html",
+  "background_page": "background.html",
+  "content_scripts": [
+    {
+      "matches": ["http://zvooq.ru/*"],
+      "js": ["content.js"],
+	  "run_at": "document_end"
+    }
+  ]
+}
+

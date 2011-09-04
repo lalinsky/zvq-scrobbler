@@ -13,20 +13,16 @@ function injected() {
 	}
 
 	var Scrobbler = function() {
-		this.timerId = undefined;
 	};
 
-	Scrobbler.prototype.onTrackPlay = function(evt) {
-		var t = evt.track;
-		console.log(t);
-		console.log(this.timerId);
+	Scrobbler.prototype.onTrackPlay = function(trackId, t) {
+		//console.log("onTrackPlay", trackId, t);
 		var track = {
 			'id': t.id,
 			'timestamp': Math.floor(new Date().getTime() / 1000),
 			'track': t.name,
-			'artist': t.artist.getSimpleName(),
-			'album': t.release.name,
-			'albumArtist': t.release.artist.getSimpleName(),
+			'artist': t.artist,
+			'album': t.release,
 			'duration': t.duration,
 			'trackNumber': t.number
 		};
@@ -34,31 +30,57 @@ function injected() {
 		this.onTrackStop();
 		var delay = Math.min(t.duration * 500, 4 * 60 * 1000);
 		this.timerId = setTimeout(function() {
-			var playing = zvqApp.queue.getPlaying();
-			var currentTrack = playing.tracksMap[playing.currentTrackUid];
-			if (track.id == currentTrack.id) {
+			if (trackId == this.getCurrentTrackId()) {
 				fireEvent(scrobbleEvent, track);
 			}
 		}, delay);
 	};
 
-	Scrobbler.prototype.onTrackStop = function(evt) {
+	Scrobbler.prototype.onTrackStop = function() {
+		//console.log("onTrackStop");
 		if (this.timerId) {
 			clearTimeout(this.timerId);
 			this.timerId = 0;
 		}
 	};
 
+	Scrobbler.prototype.getCurrentTrackId = function() {
+		var text = document.getElementsByTagName('title')[0].innerText;
+		if (text.match(/^► /)) {
+			text = text.substring(2);
+		}
+		return text;
+	}
+
+	Scrobbler.prototype.onPlayerChange = function() {
+		var isPlaying = z.player.isPlaying();
+		var wasPlaying = !(typeof this.currentTrackId === "undefined");
+		//console.log("onPlayerChange", isPlaying, wasPlaying);
+		if (isPlaying) {
+			var currentTrackId = this.getCurrentTrackId();
+			console.log("currentTrackId", currentTrackId);
+			if (currentTrackId && (!wasPlaying || currentTrackId != this.currentTrackId)) {
+				var track = z.player.getCurrentTrack();
+				track.artist = currentTrackId.split(" — ")[0];
+				this.currentTrackId = currentTrackId;
+				this.onTrackPlay(currentTrackId, track);
+			}
+		}
+		else {
+			if (wasPlaying) {
+				this.onTrackStop();
+			}
+			delete this.currentTrackId;
+		}
+	}
+
 	var scrobbler = new Scrobbler();
 
-	goog.events.listen(zvqApp.queue, [
-		zvq.managers.player.EventType.TRACK_PLAY],
-		scrobbler.onTrackPlay, false, scrobbler);
-	goog.events.listen(zvqApp.queue, [
-		zvq.managers.player.EventType.TRACK_FINISH,
-		zvq.managers.player.EventType.TRACK_PAUSE,
-		zvq.managers.player.EventType.TRACK_STOP],
-		scrobbler.onTrackStop, false, scrobbler);
+	function onPlayerChange() {
+		setTimeout(function() { scrobbler.onPlayerChange(); }, 500);
+	}
+	document.getElementsByClassName('topPanel_playerPlayback_playered_name')[0].addEventListener("DOMNodeInserted", onPlayerChange);
+	document.getElementsByTagName('title')[0].addEventListener("DOMSubtreeModified", onPlayerChange);
 }
 
 var port = chrome.extension.connect({name: "zvq_scrobbler"});

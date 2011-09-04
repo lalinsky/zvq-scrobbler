@@ -29,8 +29,9 @@ function injected() {
 		fireEvent(updateNowPlayingEvent, track);
 		this.onTrackStop();
 		var delay = Math.min(t.duration * 500, 4 * 60 * 1000);
+		s = this;
 		this.timerId = setTimeout(function() {
-			if (trackId == this.getCurrentTrackId()) {
+			if (trackId == s.getCurrentTrackId()) {
 				fireEvent(scrobbleEvent, track);
 			}
 		}, delay);
@@ -54,12 +55,11 @@ function injected() {
 
 	Scrobbler.prototype.onPlayerChange = function() {
 		var isPlaying = z.player.isPlaying();
-		var wasPlaying = !(typeof this.currentTrackId === "undefined");
 		//console.log("onPlayerChange", isPlaying, wasPlaying);
 		if (isPlaying) {
 			var currentTrackId = this.getCurrentTrackId();
 			console.log("currentTrackId", currentTrackId);
-			if (currentTrackId && (!wasPlaying || currentTrackId != this.currentTrackId)) {
+			if (currentTrackId && (!this.currentTrackId || currentTrackId != this.currentTrackId)) {
 				var track = z.player.getCurrentTrack();
 				track.artist = currentTrackId.split(" — ")[0];
 				this.currentTrackId = currentTrackId;
@@ -67,9 +67,7 @@ function injected() {
 			}
 		}
 		else {
-			if (wasPlaying) {
-				this.onTrackStop();
-			}
+			this.onTrackStop();
 			delete this.currentTrackId;
 		}
 	}

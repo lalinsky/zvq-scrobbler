@@ -58,10 +58,9 @@ function injected() {
 		//console.log("onPlayerChange", isPlaying, wasPlaying);
 		if (isPlaying) {
 			var currentTrackId = this.getCurrentTrackId();
-			console.log("currentTrackId", currentTrackId);
+			//console.log("currentTrackId", currentTrackId);
 			if (currentTrackId && (!this.currentTrackId || currentTrackId != this.currentTrackId)) {
 				var track = z.player.getCurrentTrack();
-				track.artist = currentTrackId.split(" — ")[0];
 				this.currentTrackId = currentTrackId;
 				this.onTrackPlay(currentTrackId, track);
 			}
